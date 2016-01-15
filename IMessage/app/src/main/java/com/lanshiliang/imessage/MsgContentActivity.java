@@ -55,12 +55,12 @@ public class MsgContentActivity extends Activity {
         msgInfo.getSmsInPhone();
         readContacts();
         String address = getIntent().getStringExtra("msg"); //获取手机号码
-        msgList = msgInfo.getContentsMap().get(address);
+        msgList = msgInfo.getListMsg(address);
         Collections.reverse(msgList);//按时间顺序给短信排序
         msgContentAdapter = new MsgContentAdapter(this,R.layout.msg_item,msgList);
         mnmAddress.setText(address);
         contentName = (LinearLayout) findViewById(R.id.content_name);
-        if(contacts.containsKey(address)){
+        if(contacts.containsKey(address)){ //如果号码不在联系人中
             mnmName.setText(contacts.get(address));
         }
         else {
@@ -83,6 +83,7 @@ public class MsgContentActivity extends Activity {
                         null,input.getText().toString(),pi,null);
                 msgInfo.getSmsInPhone();
                 msgContentAdapter.notifyDataSetChanged();
+                input.setText("");
             }
         });
         

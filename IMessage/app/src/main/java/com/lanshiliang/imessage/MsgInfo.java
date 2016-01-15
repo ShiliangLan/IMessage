@@ -10,6 +10,7 @@ import android.util.Log;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -20,12 +21,7 @@ import java.util.Map;
  */
 public class MsgInfo {
     final String SMS_URI_ALL = "content://sms/";
-    final String SMS_URI_INBOX = "content://sms/inbox";
-    final String SMS_URI_SEND = "content://sms/sent";
-    final String SMS_URI_DRAFT = "content://sms/draft";
-    final String SMS_URI_OUTBOX = "content://sms/outbox";
-    final String SMS_URI_FAILED = "content://sms/failed";
-    final String SMS_URI_QUEUED = "content://sms/queued";
+
     private Context context;
 
     private List<Msg> item = new ArrayList<Msg>();
@@ -40,10 +36,14 @@ public class MsgInfo {
         this.context = context;
     }
 
-    public HashMap<String, ArrayList<Msg>> getContentsMap() {
-        return contentsMap;
+    public  ArrayList<Msg> getListMsg(String address) {
+        Collections.reverse(contentsMap.get(address));
+        return contentsMap.get(address);
     }
 
+    public void getSmsView(){
+
+    }
     public void getSmsInPhone() {
         try {
             Uri uri = Uri.parse(SMS_URI_ALL);
