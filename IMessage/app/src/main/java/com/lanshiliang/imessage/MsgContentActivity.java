@@ -52,16 +52,15 @@ public class MsgContentActivity extends Activity {
         input = (EditText) findViewById(R.id.input_text);
         send = (Button) findViewById(R.id.send);
         msgInfo = new MsgInfo(this);
-        msgInfo.getSmsInPhone();
-        readContacts();
+        msgInfo.getContentAdapter();
         String address = getIntent().getStringExtra("msg"); //获取手机号码
         msgList = msgInfo.getListMsg(address);
-        Collections.reverse(msgList);//按时间顺序给短信排序
+//        Collections.reverse(msgList);//按时间顺序给短信排序
         msgContentAdapter = new MsgContentAdapter(this,R.layout.msg_item,msgList);
         mnmAddress.setText(address);
         contentName = (LinearLayout) findViewById(R.id.content_name);
-        if(contacts.containsKey(address)){ //如果号码不在联系人中
-            mnmName.setText(contacts.get(address));
+        if(msgList.get(0).getName() != ""){ //如果号码不在联系人中
+            mnmName.setText(msgList.get(0).getName());
         }
         else {
             contentName.setVisibility(View.GONE);
@@ -81,7 +80,7 @@ public class MsgContentActivity extends Activity {
                 PendingIntent pi = PendingIntent.getBroadcast(MsgContentActivity.this,0,sendIntent,0);
                 smsManager.sendTextMessage(msgList.get(0).getStrAddress(),
                         null,input.getText().toString(),pi,null);
-                msgInfo.getSmsInPhone();
+                msgInfo.getContentAdapter();
                 msgContentAdapter.notifyDataSetChanged();
                 input.setText("");
             }
@@ -95,25 +94,6 @@ public class MsgContentActivity extends Activity {
         unregisterReceiver(sendStatusReceiver);
     }
 
-    private Map<String,String> contacts =new HashMap<String,String>();
-    public  void readContacts(){
-        Cursor cursor=null;
-        try{
-            cursor=this.getContentResolver().query(
-                    ContactsContract.CommonDataKinds.Phone.CONTENT_URI,
-                    null,null,null,null);
-            while(cursor.moveToNext()){
-
-                String displayName=cursor.getString(cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME));
-                String number =cursor.getString(cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER));
-                contacts.put(number,displayName);
-            }
-        }catch (Exception e){
-            e.printStackTrace();
-        }finally {
-            if(cursor!=null) cursor.close();
-        }
-    }
 
     private class SendStatusReceiver extends BroadcastReceiver{
 

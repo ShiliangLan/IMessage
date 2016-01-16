@@ -28,7 +28,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         setContentView(R.layout.activity_main);
         listItem = (ListView) findViewById(R.id.list_msg);
         msgInfo = new MsgInfo(this);
-        msgInfo.getSmsInPhone();
+        msgInfo.getMainAdapter();
         MsgAdapter msgAdapter = new MsgAdapter(MainActivity.this,R.layout.msg_list_item,msgInfo.getItem());
         listItem.setAdapter(msgAdapter);
         listItem.setOnItemClickListener(this);

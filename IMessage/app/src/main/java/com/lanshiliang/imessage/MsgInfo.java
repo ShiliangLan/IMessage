@@ -13,27 +13,36 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Created by lanshiliang on 2016/1/12.
  */
 public class MsgInfo {
+    SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+    Date d ;
+
     final String SMS_URI_ALL = "content://sms/";
 
     private Context context;
 
-    private List<Msg> item = new ArrayList<Msg>();
+    private List<Msg> item =new ArrayList<>() ;
 
+    private Set<String> addSet =new HashSet<>();
     private HashMap<String,ArrayList<Msg>> contentsMap =new HashMap<String,ArrayList<Msg>>();
 
     public List<Msg> getItem() {
+
         return item;
     }
 
     public MsgInfo(Context context) {
         this.context = context;
+        readContacts();
     }
 
     public  ArrayList<Msg> getListMsg(String address) {
@@ -41,10 +50,52 @@ public class MsgInfo {
         return contentsMap.get(address);
     }
 
-    public void getSmsView(){
+    private Map<String,String> contacts =new HashMap<String,String>();
+    public  void readContacts(){
+        Cursor cursor=null;
+        try{
+            cursor=context.getContentResolver().query(
+                    ContactsContract.CommonDataKinds.Phone.CONTENT_URI,
+                    null,null,null,null);
+            while(cursor.moveToNext()){
 
+                String displayName=cursor.getString(cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME));
+                String number =cursor.getString(cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER));
+//                contactsList.add(displayName+"\n"+number);
+                contacts.put(number,displayName);
+            }
+        }catch (Exception e){
+            e.printStackTrace();
+        }finally {
+            if(cursor!=null) cursor.close();
+        }
     }
-    public void getSmsInPhone() {
+    public void getContentAdapter() {
+        contentsMap.clear();
+        try {
+            Uri uri = Uri.parse(SMS_URI_ALL);
+            Cursor cur = context.getContentResolver().query(uri, null, null, null, "date desc");
+            while (cur.moveToNext()){
+                String strAddress = cur.getString(cur.getColumnIndex("address"));
+                String strBody = cur.getString(cur.getColumnIndex("body"));
+                long longDate = cur.getLong(cur.getColumnIndex("date"));
+                int intType = cur.getInt(cur.getColumnIndex("type"));
+                String name = "";
+                if( contacts.containsKey(strAddress)){
+                    name =contacts.get(strAddress);
+                }
+                Msg msg =new Msg(strAddress,strBody,longDate,intType,name);
+                if(!contentsMap.containsKey(strAddress)){
+                    contentsMap.put(strAddress, new ArrayList<Msg>());
+                }
+                contentsMap.get(strAddress).add(msg);
+            }
+        }catch (SQLiteException e){
+            e.printStackTrace();
+        }
+    }
+    public void getMainAdapter() {
+        addSet.clear();
         try {
             Uri uri = Uri.parse(SMS_URI_ALL);
             Cursor cur = context.getContentResolver().query(uri, null, null, null, "date desc");
@@ -54,12 +105,16 @@ public class MsgInfo {
                 String strBody = cur.getString(cur.getColumnIndex("body"));
                 long longDate = cur.getLong(cur.getColumnIndex("date"));
                 int intType = cur.getInt(cur.getColumnIndex("type"));
-                Msg msg =new Msg(strAddress,intPerson,strBody,longDate,intType);
-                if(!contentsMap.containsKey(strAddress)){
-                    contentsMap.put(strAddress, new ArrayList<Msg>());
+                String name = "";
+
+                if( contacts.containsKey(strAddress)){
+                    name =contacts.get(strAddress);
+                }
+                Msg msg =new Msg(strAddress,strBody,longDate,intType,name);
+                if(!addSet.contains(strAddress)){
+                    addSet.add(strAddress);
                     item.add(msg);
                 }
-                contentsMap.get(strAddress).add(msg);
             }
         }catch (SQLiteException e){
             e.printStackTrace();
@@ -67,26 +122,27 @@ public class MsgInfo {
     }
     class Msg{
         private String strAddress ;
-        private int intPerson ;
+        private String name ;
         private String strBody ;
         private long longDate ;
         private int intType ;
 
-        public Msg(String strAddress, int intPerson, String strBody, long longDate, int intType) {
+        public Msg(String strAddress, String strBody, long longDate, int intType,String name) {
             this.strAddress = strAddress;
-            this.intPerson = intPerson;
+            this.name = name;
             this.strBody = strBody;
             this.longDate = longDate;
             this.intType = intType;
+        }
+
+        public String getName() {
+            return name;
         }
 
         public String getStrAddress() {
             return strAddress;
         }
 
-        public int getIntPerson() {
-            return intPerson;
-        }
 
         public String getStrBody() {
             return strBody;
