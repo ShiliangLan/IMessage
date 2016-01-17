@@ -14,7 +14,8 @@ import java.util.List;
  * Created by lanshiliang on 2016/1/13.
  */
 public class MsgContentAdapter extends ArrayAdapter<MsgInfo.Msg> {
-    int resourceId ;
+
+    private int resourceId ;
 
     public MsgContentAdapter(Context context, int resource, List<MsgInfo.Msg> objects) {
         super(context, resource, objects);

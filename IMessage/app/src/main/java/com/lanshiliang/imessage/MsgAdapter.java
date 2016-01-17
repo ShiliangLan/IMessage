@@ -8,6 +8,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import java.util.HashMap;
@@ -27,27 +28,38 @@ public class MsgAdapter extends ArrayAdapter<MsgInfo.Msg> {
         resourceId = resource;
     }
 
-
-
-
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
         MsgInfo.Msg  msg=getItem(position);
-        View view = LayoutInflater.from(getContext()).inflate(resourceId, null);
-        ImageView img = (ImageView) view.findViewById(R.id.img_icn);
-        TextView name = (TextView) view.findViewById(R.id.msg_name);
-        TextView date = (TextView) view.findViewById(R.id.msg_date);
-        TextView content = (TextView) view.findViewById(R.id.mag_content);
-        img.setImageResource(R.mipmap.ic_launcher);
-        if (msg.getName() != ""){
-            name.setText(msg.getName());
+        View view;
+        ViewHolder viewHolder;
+        if (convertView == null){
+            view = LayoutInflater.from(getContext()).inflate(resourceId, null);
+            viewHolder = new ViewHolder();
+            viewHolder.imageView = (ImageView) view.findViewById(R.id.img_icn);
+            viewHolder.name = (TextView) view.findViewById(R.id.msg_name);
+            viewHolder.date = (TextView) view.findViewById(R.id.msg_date);
+            viewHolder.content = (TextView) view.findViewById(R.id.mag_content);
+            view.setTag(viewHolder);
         }else {
-            name.setText(msg.getStrAddress());
+            view = convertView;
+            viewHolder = (ViewHolder) view.getTag();
+        }
+        viewHolder.imageView.setImageResource(R.mipmap.ic_launcher);
+        if (msg.getName() != ""){
+            viewHolder.name.setText(msg.getName());
+        }else {
+            viewHolder.name.setText(msg.getStrAddress());
         }
         String shortDate []= msg.getLongDate().split("-| ");
-        date.setText(shortDate[1]+"-"+shortDate[2]);
-        content.setText(msg.getStrBody());
+        viewHolder.date.setText(shortDate[1]+"-"+shortDate[2]);
+        viewHolder.content.setText(msg.getStrBody());
         return view;
+    }
+
+    class ViewHolder {
+        ImageView imageView;
+        TextView  name ,date ,content;
     }
 
 }
