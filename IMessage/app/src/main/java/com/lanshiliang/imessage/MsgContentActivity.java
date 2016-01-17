@@ -6,11 +6,11 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.database.Cursor;
+import android.database.ContentObserver;
+import android.net.Uri;
 import android.os.Bundle;
-import android.provider.ContactsContract;
+import android.os.Handler;
 import android.telephony.SmsManager;
-import android.view.KeyEvent;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -18,12 +18,8 @@ import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
+import java.util.List;
 
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
 
 
 /**
@@ -31,7 +27,8 @@ import java.util.Map;
  */
 public class MsgContentActivity extends Activity {
 
-    private ArrayList<MsgInfo.Msg> msgList ;
+    private String address;
+    private List<MsgInfo.Msg> msgList ;
     private MsgInfo msgInfo;
     private ListView contentListView ;
     private TextView mnmName,mnmAddress;
@@ -52,8 +49,7 @@ public class MsgContentActivity extends Activity {
         input = (EditText) findViewById(R.id.input_text);
         send = (Button) findViewById(R.id.send);
         msgInfo = new MsgInfo(this);
-        msgInfo.getContentAdapter();
-        String address = getIntent().getStringExtra("msg"); //获取手机号码
+        address = getIntent().getStringExtra("msg"); //获取手机号码
         msgList = msgInfo.getListMsg(address);
 //        Collections.reverse(msgList);//按时间顺序给短信排序
         msgContentAdapter = new MsgContentAdapter(this,R.layout.msg_item,msgList);
@@ -68,6 +64,9 @@ public class MsgContentActivity extends Activity {
         }
         contentListView.setAdapter(msgContentAdapter);
         contentListView.setSelection(msgList.size());
+        //注册Listener ，监听数据库变化
+        getContentResolver().registerContentObserver(
+                Uri.parse("content://sms"), true, new SmsObserver(new Handler()));
         sendFilter = new IntentFilter();
         sendFilter.addAction("SEND_SMS_ACTION");
         sendStatusReceiver = new SendStatusReceiver();
@@ -79,10 +78,9 @@ public class MsgContentActivity extends Activity {
                 Intent sendIntent = new Intent("SEND_SMS_ACTION");
                 PendingIntent pi = PendingIntent.getBroadcast(MsgContentActivity.this,0,sendIntent,0);
                 smsManager.sendTextMessage(msgList.get(0).getStrAddress(),
-                        null,input.getText().toString(),pi,null);
-                msgInfo.getContentAdapter();
-                msgContentAdapter.notifyDataSetChanged();
-                input.setText("");
+                        null, input.getText().toString(), pi, null);
+                Toast.makeText(MsgContentActivity.this,"发送中……",Toast.LENGTH_LONG).show();
+
             }
         });
         
@@ -100,12 +98,30 @@ public class MsgContentActivity extends Activity {
         @Override
         public void onReceive(Context context, Intent intent) {
             if(getResultCode() == RESULT_OK){
-                Toast.makeText(context,"Send succeeded ",Toast.LENGTH_LONG).show();
+                Toast.makeText(context,"发送成功",Toast.LENGTH_LONG).show();
+                input.setText("");
             }
             else {
-                Toast.makeText(context,"Send failed ",Toast.LENGTH_LONG).show();
-
+                Toast.makeText(context,"发送失败",Toast.LENGTH_LONG).show();
             }
+        }
+    }
+ private  class SmsObserver extends ContentObserver {
+        /**
+         * Creates a content observer.
+         *
+         * @param handler The handler to run {@link #onChange} on, or null if none.
+         */
+        public SmsObserver(Handler handler) {
+            super(handler);
+        }
+
+        @Override
+        public void onChange(boolean selfChange) {
+            msgInfo.getListMsg(address); //更新adapter数据
+            msgContentAdapter.notifyDataSetChanged();
+            contentListView.setSelection(msgList.size());
+            super.onChange(selfChange);
         }
     }
 }

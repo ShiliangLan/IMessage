@@ -23,31 +23,33 @@ import java.util.Set;
  * Created by lanshiliang on 2016/1/12.
  */
 public class MsgInfo {
-    SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-    Date d ;
+    private String address;
 
     final String SMS_URI_ALL = "content://sms/";
 
     private Context context;
 
-    private List<Msg> item =new ArrayList<>() ;
+    private List<Msg> item =new ArrayList<>() ; //MainActivityAdapter
 
     private Set<String> addSet =new HashSet<>();
+
     private HashMap<String,ArrayList<Msg>> contentsMap =new HashMap<String,ArrayList<Msg>>();
 
-    public List<Msg> getItem() {
-
+    public List<Msg> getItem()
+    {
+        getMainAdapter();
         return item;
     }
-
     public MsgInfo(Context context) {
         this.context = context;
         readContacts();
     }
 
-    public  ArrayList<Msg> getListMsg(String address) {
-        Collections.reverse(contentsMap.get(address));
-        return contentsMap.get(address);
+    public  List<Msg> getListMsg(String address) {
+        this.address =address;
+        getContentAdapter();
+        Collections.reverse(item);
+        return item;
     }
 
     private Map<String,String> contacts =new HashMap<String,String>();
@@ -71,7 +73,8 @@ public class MsgInfo {
         }
     }
     public void getContentAdapter() {
-        contentsMap.clear();
+
+        item.clear();
         try {
             Uri uri = Uri.parse(SMS_URI_ALL);
             Cursor cur = context.getContentResolver().query(uri, null, null, null, "date desc");
@@ -84,11 +87,10 @@ public class MsgInfo {
                 if( contacts.containsKey(strAddress)){
                     name =contacts.get(strAddress);
                 }
-                Msg msg =new Msg(strAddress,strBody,longDate,intType,name);
-                if(!contentsMap.containsKey(strAddress)){
-                    contentsMap.put(strAddress, new ArrayList<Msg>());
+                if( strAddress.equals(address)){
+                    Msg msg =new Msg(strAddress,strBody,longDate,intType,name);
+                    item.add(msg);
                 }
-                contentsMap.get(strAddress).add(msg);
             }
         }catch (SQLiteException e){
             e.printStackTrace();
@@ -96,11 +98,11 @@ public class MsgInfo {
     }
     public void getMainAdapter() {
         addSet.clear();
+        item.clear();
         try {
             Uri uri = Uri.parse(SMS_URI_ALL);
             Cursor cur = context.getContentResolver().query(uri, null, null, null, "date desc");
             while (cur.moveToNext()){
-                int intPerson = cur.getInt(cur.getColumnIndex("person"));
                 String strAddress = cur.getString(cur.getColumnIndex("address"));
                 String strBody = cur.getString(cur.getColumnIndex("body"));
                 long longDate = cur.getLong(cur.getColumnIndex("date"));
